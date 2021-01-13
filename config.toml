@@ -1,0 +1,34 @@
+# The URL the site will be built for
+base_url = "http://irevoire.ovh/"
+
+# Whether to automatically compile all Sass files in the sass directory
+compile_sass = true
+
+# Whether to build a search index to be used later on by a JavaScript library
+build_search_index = true
+
+# Theme: https://www.getzola.org/themes/sam/
+theme = "sam"
+
+check_external_links = true
+
+[search]
+include_title = true
+include_description = false
+include_content = true
+# truncate_content_length = 100
+
+[markdown]
+highlight_code = true
+highlight_theme = "two-dark"
+
+[extra]
+render_emoji = true
+show_word_count = true
+show_reading_time = true
+sam_menu = [
+{ text = "blog", link = "/blog" },
+{ text = "about", link = "/about" },
+{ text = "github", link = "https://github.com/irevoire" },
+{ text = "twitter", link = "https://twitter.com/irevoire" }
+]
