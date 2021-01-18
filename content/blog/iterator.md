@@ -254,7 +254,7 @@ This small example for example will be read in this order probably:
 ```python
 sum(map(lambda el: el + 1, a))
 -v- -v- --------v--------  v
- 4    2          3          1
+ 4   2          3          1
 ```
 
 Also now you can't just copy / paste / delete code easily.
@@ -315,5 +315,244 @@ And finally, we'll write the previous code with our basic implementation.
 The first language feature we are going to use is “embedded function” or “closure”.
 The feature we are looking for is the possibility of capturing the data we are working on.
 
+TODO: a lot of great implementations in multiple languages here
 
-a lot of great implementations here
+#### create
+
+```lua
+function iiter(table)
+	local index = 0
+
+	return function()
+		index = index + 1
+		return table[index]
+	end
+end
+```
+
+In Lua, `table` starts at `1`. So here we returns a function that will return each elements in the table from `1` to infinity. However, once we are requesting an element that does not exists, Lua will return `nil`.
+For now we are going to use `nil` as our stopping value.
+
+```lua
+local array = {1, 2, 3, 4}
+
+local iterator = iiter(array)
+print(iterator()) -- 1
+print(iterator()) -- 2
+print(iterator()) -- 3
+print(iterator()) -- 4
+print(iterator()) -- nil
+```
+
+Great so the first step works!
+
+#### modify
+
+Now we want to be able to “modify” the content of our iterator, we are going to implements the `map` function.
+As seen earlier, the `map` function takes another function in parameter, and the iterator.
+
+```lua
+function map(iterator, fn)
+	return function()
+		return fn(iterator())
+	end
+end
+```
+
+Easy, here is how to use it:
+
+```lua
+local array = {1, 2, 3, 4}
+
+local iterator = iiter(array)
+local map = map(iterator, function(element) return element + 1 end)
+
+print(iterator()) -- 2
+print(iterator()) -- 3
+print(iterator()) -- 4
+print(iterator()) -- 5
+print(iterator()) -- ERROR, attempt to perform arithmetic on a nil value
+```
+
+Ok this is easy to write, but we don't want to let the user handle the `nil` case.
+So we need to return `nil` without calling the user function:
+
+```lua
+function map(iterator, fn)
+	return function()
+		local element = iterator()
+		if element == nil then return nil else return fn(element) end
+	end
+end
+```
+
+And now we can re-run the previous code and it just works:
+
+```lua
+local array = {1, 2, 3, 4}
+
+local iterator = iiter(array)
+local map = map(iterator, function(element) return element + 1 end)
+
+print(iterator()) -- 2
+print(iterator()) -- 3
+print(iterator()) -- 4
+print(iterator()) -- 5
+print(iterator()) -- nil
+```
+
+#### collect
+
+Finally, we want to implements a collector.
+For our example we need a `sum` collector.
+
+First we are going to implements the `sum`. Basically we want to create an accumulator and shove every elements in it.
+
+```lua
+function sum(iterator)
+	local element = iterator()
+	local result = 0
+
+	while element ~= nil do
+		result = result + element
+		element = iterator()
+	end
+
+	return result
+end
+```
+
+And now we can write:
+```lua
+local array = {1, 2, 3, 4}
+
+local iterator = iiter(array)
+local map = map(iterator, function(element) return element + 1 end)
+local result = sum(map)
+
+print(result) -- 14
+```
+
+#### Refactor
+Great, but now we have the same problem python have, our iterator are shitty and if we want to don't allocate new variables at every steps it would look like this:
+
+```lua
+local array = {1, 2, 3, 4}
+
+local result = sum(map(iiter(array), function(element) return element + 1 end))
+
+print(result) -- 14
+```
+
+We would prefer to write it in the form of:
+
+```lua
+local array = {1, 2, 3, 4}
+
+local result = iiter(array)
+	:map(function(element) return element + 1 end)
+	:sum()
+
+print(result) -- 14
+```
+
+Basically we want the `iiter` function to returns an object, and then every “modify” or “collect” functions are going to be methods, this will allow us to use the `:` operator.
+
+So we are going to create an object called `Iterator` containing a `next` function that'll return either an element of the iterator or `nil`.
+
+```lua
+Iterator = {}
+```
+
+Then we update our `iiter` function to return an `Iterator` object:
+
+```lua
+function Iterator:iiter(table)
+	local index = 0
+
+	self.next = function()
+		index = index + 1
+		return table[index]
+	end
+
+	return self
+end
+```
+
+We wrote `Iterator.iiter`. This allow us to declare a function associated to the `Iterator` table.
+Then we set `self.next` as the function we were returning before.
+This allow us to write this code:
+```lua
+local array = {1, 2, 3, 4}
+local iter = Iterator:iiter(array)
+
+print(iter.next()) -- 1
+print(iter.next()) -- 2
+print(iter.next()) -- 3
+print(iter.next()) -- 4
+print(iter.next()) -- nil
+```
+
+Great, now we are going to rewrite the `map` function as a method:
+```lua
+function Iterator:map(fn)
+	-- here we need to be cautious because we don't want to create an infinite recursive loop
+	local iter = self.next
+
+	self.next = function()
+		local element = iter()
+		if element == nil then return nil else return fn(element) end
+	end
+
+	return self
+end
+```
+
+There is one tricky thing here, if we were to write something  in the form of:
+```lua
+self.next = self.next()
+```
+We would create an infinite loop, that's why we are moving the function in a separate variable so we won't refer to ourselves.
+Then the code is pretty much the same and we can now write:
+```lua
+local array = {1, 2, 3, 4}
+local iter = Iterator:iiter(array)
+	:map(function(element) return element + 1 end)
+
+print(iter.next()) -- 2
+print(iter.next()) -- 3
+print(iter.next()) -- 4
+print(iter.next()) -- 5
+print(iter.next()) -- nil
+```
+
+Yay, now we can write the `sum` and it'll be over:
+
+```lua
+function Iterator:sum()
+	local element = self.next()
+	local result = 0
+
+	while element ~= nil do
+		result = result + element
+		element = self.next()
+	end
+
+	return result
+end
+```
+
+Here it's mostly the same code as before except we changed the `iter()` into a `self.next()`.
+
+And now our final code look like this:
+```lua
+local array = {1, 2, 3, 4}
+
+local result = Iterator:iiter(array)
+	:map(function(element) return element + 1 end)
+	:sum()
+
+print(result)
+```
+
+🎉
