@@ -19,7 +19,7 @@ We'll see:
 
 An iterator sometimes called a “Generator”, is a function that returns a value every time it's called and that doesn't take any arguments.
 It must also return a stop value to indicate that nothing more will be returned.
-This can look basic at first, but it allows us to abstract completely the things we are working on and use a lot of functions defined on the iterators.
+This can look basic at first, but it allows us to abstract completely the datas we are working on and use all the generics function defined on iterators.
 
 Once you have this basic setting we'll consider there are only three types of operations defined on iterators:
 1. Create
@@ -32,7 +32,7 @@ An iterator can be created in multiple ways and from multiple sources:
 You could create an iterator that returns all the values between a range of integer
 Or you could iterate over the elements of a data structure:
 * The elements of an array, a list, or a HashSet
-* he keys or values of a hashmap
+* The keys or values of a hashmap
 * The lines of a String
 * It could also be used to iterate on IO operations:
 * The lines of a file or stdio
@@ -101,9 +101,9 @@ Here the big difference is that the "i" variable is now declared and managed on 
 Also now, once you are out of the loop, the "i" variable comes out of your environment. You can't access it anymore and it's better this way because if you were to use it it would certainly be by error.
 
 But you still have to read carefully the body of the loop:
-What happens if "i" is modified inside of the loop
-What if your condition is wrong and "i" stop too early or too late
-What if you increment it badly
+- What happens if "i" is modified inside of the loop
+- What if your condition is wrong and "i" stop too early or too late
+- What if you increment it badly
 
 That's why today, in most languages we have iterator based for-loop.
 For example in rust we would write:
@@ -230,7 +230,7 @@ If you need to refactorize this code there is a good chance you will be able to 
 
 
 #### Special note for python
-Python implements iterator as objects, but bad.
+Python implements iterator as objects, but badly.
 Instead of defining the operation on iterators as methods, they define it as global functions.
 Not only there is no point in doing that since you won't use one of these operations for something else than an iterator.
 But it also breaks the previous argument because an easy code we've seen before like:
