@@ -20,7 +20,7 @@ include_content = true
 
 [markdown]
 highlight_code = true
-highlight_theme = "two-dark"
+highlight_theme = "monokai"
 
 [extra]
 render_emoji = true

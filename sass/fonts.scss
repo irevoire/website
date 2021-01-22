@@ -1,0 +1,14 @@
+body {
+	font-family: 'Helvetica' !important;
+	font-style: normal;
+	font-weight: 400;
+}
+
+#content code {
+	-webkit-font-feature-settings: "liga" on, "calt" on !important;
+	-webkit-font-smoothing: antialiased !important;
+	text-rendering: optimizeLegibility !important;
+	font-family: 'Fira Code' !important;
+}
+
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css);
